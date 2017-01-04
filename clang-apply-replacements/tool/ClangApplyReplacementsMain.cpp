@@ -207,9 +207,14 @@ int main(int argc, char **argv) {
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()), DiagOpts.get());
 
   // Determine a formatting style from options.
-  format::FormatStyle FormatStyle;
-  if (DoFormat)
+  llvm::Expected<format::FormatStyle> FormatStyle = format::getNoStyle();
+  if (DoFormat) {
     FormatStyle = format::getStyle(FormatStyleOpt, FormatStyleConfig, "LLVM");
+    if (!FormatStyle) {
+      llvm::errs() << llvm::toString(FormatStyle.takeError()) << "\n";
+      return 1;
+    }
+  }
 
   TUReplacements TURs;
   TUReplacementFiles TUFiles;
@@ -262,7 +267,7 @@ int main(int argc, char **argv) {
     // Apply formatting if requested.
     if (DoFormat &&
         !applyFormatting(FileAndReplacements.second, NewFileData, NewFileData,
-                         FormatStyle, Diagnostics)) {
+                         *FormatStyle, Diagnostics)) {
       errs() << "Failed to apply reformatting replacements for " << FileName
              << "\n";
       continue;
