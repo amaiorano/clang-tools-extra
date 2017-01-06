@@ -1,0 +1,5 @@
+text=auto
+
+# Disable eol conversions as certain tests rely on specific line endings
+test/**/*.h -text
+test/**/*.cpp -text
